@@ -78,6 +78,7 @@ public class ReversiView extends Application implements Observer  {
 		this.score = new Label("White: " + model.getWScore() + " " + "Black: " + model.getBScore());
 		MenuBar menuBar = new MenuBar();
 		MenuItem menuItem = new MenuItem("New Game");
+		MenuItem networkOption = new MenuItem("Networked Game");
 		
 		// Resets the Board if NewGame is Pressed in Menu
 		menuItem.setOnAction(new EventHandler<ActionEvent>() {
@@ -86,7 +87,15 @@ public class ReversiView extends Application implements Observer  {
 			    }
 			});
 		
+		// Pops up Options for NetWorked Game
+		networkOption.setOnAction(new EventHandler<ActionEvent>() {
+		    @Override public void handle(ActionEvent e) {
+		    	 new NetworkSetup(); // Resets the Board to Default State
+		    }
+		});
+		
 		 FileBar.getItems().add(menuItem);
+		 FileBar.getItems().add(networkOption);
 		 menuBar.getMenus().addAll(FileBar);
 		 
 	     tile = new TilePane();
