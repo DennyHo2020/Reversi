@@ -94,7 +94,7 @@ public class NetworkSetup extends Stage {
 			this.server = serverTextField.getText();
 			this.port = portTextField.getText(); 
 			
-			//System.out.println(isServer + " " + isHuman + " " + server + " " + port);
+			System.out.println(isServer + " " + isHuman + " " + server + " " + port);
 			
 			
 		});
