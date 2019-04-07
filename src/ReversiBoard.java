@@ -10,17 +10,18 @@ import java.nio.file.Paths;
 
 /**
  * 
- * @author Denny Ho and Ryan Luu 
+ * @author Denny Ho and Ryan Luu
  * 
- * ReversiBoard's Purpose is to hold an representation of the Board that is 
- * written out to bytes using Serialization for loading and saving purposes.
+ *         ReversiBoard's Purpose is to hold an representation of the Board that
+ *         is written out to bytes using Serialization for loading and saving
+ *         purposes.
  *
  */
 
-public class ReversiBoard implements Serializable{
+public class ReversiBoard implements Serializable {
 
-	private int [][] board; 
-	
+	private int[][] board;
+
 	/**
 	 * constructor using a passed in representation of the current board
 	 * 
@@ -29,28 +30,24 @@ public class ReversiBoard implements Serializable{
 	public ReversiBoard(int[][] board) {
 		this.board = board;
 	}
-	
+
 	/**
 	 * Save() writes out the current object to a save_game.dat file
 	 * 
 	 * @throws Exception: When File could not be saved too.
 	 */
 	public void save() throws Exception {
-		ObjectOutputStream oos = 
-			    new ObjectOutputStream(new FileOutputStream("save_game.dat"));
-	oos.writeObject(this);
+		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("save_game.dat"));
+		oos.writeObject(this);
 	}
-	
+
 	/**
 	 * getBorad is a getter for current representation of the board
-	
+	 * 
 	 * @return : int[][] of the current board
 	 */
 	public int[][] getBoard() {
 		return board;
 	}
-	
-	
-	
-	
+
 }

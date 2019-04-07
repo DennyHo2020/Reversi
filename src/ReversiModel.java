@@ -54,8 +54,8 @@ public class ReversiModel extends Observable {
 		if (!(row < 0 || row > BOARD_DIMENSION-1 || col < 0 || col > BOARD_DIMENSION-1)) {
 			board[row][col] = W;
 		}
-		setChanged();
-        notifyObservers(new ReversiBoard(board)); 
+//		setChanged();
+//        notifyObservers(new ReversiBoard(board)); 
 	}
 	/**
 	 * Places a Black token on the board at given row col
@@ -68,8 +68,8 @@ public class ReversiModel extends Observable {
 		if (!(row < 0 || row > BOARD_DIMENSION-1 || col < 0 || col > BOARD_DIMENSION-1)) {
 			board[row][col] = B;
 		}
-		setChanged();
-        notifyObservers(new ReversiBoard(board)); 		
+//		setChanged();
+//        notifyObservers(new ReversiBoard(board)); 		
 	}
 	/**
 	 * Flips the current token at location to its opposite color
@@ -86,8 +86,8 @@ public class ReversiModel extends Observable {
 				board[row][col] = B;
 			}
 		}
-		setChanged();
-        notifyObservers(new ReversiBoard(board)); 
+//		setChanged();
+//        notifyObservers(new ReversiBoard(board)); 
 	}
 	/**
 	 * Gets the token color at a given on the board
@@ -141,8 +141,8 @@ public class ReversiModel extends Observable {
 	 */
 	public void setWScore(int wScore) {
 		this.wScore = wScore;
-		setChanged();
-        notifyObservers(new ReversiBoard(board)); 
+//		setChanged();
+//        notifyObservers(new ReversiBoard(board)); 
 	}
 	/**
 	 * Getter for Black player's score
@@ -157,8 +157,8 @@ public class ReversiModel extends Observable {
 	 */
 	public void setBScore(int bScore) {
 		this.bScore = bScore;
-		setChanged();
-        notifyObservers(new ReversiBoard(board)); 
+//		setChanged();
+//        notifyObservers(new ReversiBoard(board)); 
 	}
 	
 	/**
@@ -167,6 +167,15 @@ public class ReversiModel extends Observable {
 	 */
 	public void setBoard(int[][] loadBoard) {
 		this.board = loadBoard;
+	}
+	
+	public ReversiBoard getBoardObj() {
+		return new ReversiBoard(board);
+	}
+	
+	public void endTurn() {
+		setChanged();
+        notifyObservers(new ReversiBoard(board)); 
 	}
 	
 
