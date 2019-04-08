@@ -62,7 +62,7 @@ public class ReversiView extends Application implements Observer {
 	private Label score;
 
 	// Networking Fields
-	private NetworkSetup networkSettings;
+	public NetworkSetup networkSettings;
 	private boolean connectionEstablished = false;
 	private boolean canPlay = true;
 	private Server clientConnection;
@@ -99,23 +99,26 @@ public class ReversiView extends Application implements Observer {
 		menuItem.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
-				resetBoard(); 
+				resetBoard();
 			}
 		});
 
-		// Pops up Options for NetWorked Game
+		// Pops up Options for Networked Game
 		networkOption.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
-				networkSettings = new NetworkSetup(); 
+				networkSettings = new NetworkSetup();
 				isServer = networkSettings.getServerOrClient();
-				connectionEstablished = true;
 				if (isServer) {
 					clientConnection = createServer();
 					try {
 						clientConnection.startConnection();
 					} catch (IOException e1) {
 					}
+					if (!networkSettings.getHumanOrComputer()) {
+						canPlay = false;
+					}
+
 				} else {
 					serverConnection = createClient();
 					try {
@@ -124,7 +127,10 @@ public class ReversiView extends Application implements Observer {
 					}
 					canPlay = false;
 				}
+				connectionEstablished = true;
+
 			}
+
 		});
 
 		FileBar.getItems().add(menuItem);
@@ -156,27 +162,101 @@ public class ReversiView extends Application implements Observer {
 		primaryStage.show();
 	}
 
+	/**
+	 * Plays the first Server AI turn
+	 */
+	public void turnAI() {
+		if (isServer) {
+			try {
+				networkAIPlay(ReversiModel.W);
+				clientConnection.send(board);
+			} catch (ReversiIllegalLocationException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * Creates a new Server
+	 * 
+	 * @return Server
+	 */
 	private Server createServer() {
-		return new Server(networkSettings.getPort(), board -> {
+		return new Server(this, networkSettings.getPort(), board -> {
 			Platform.runLater(() -> {
 				changeBoard(board);
 			});
 		});
 	}
 
+	/**
+	 * Creates a new Client
+	 * 
+	 * @return Client
+	 */
 	private Client createClient() {
-		return new Client("127.0.0.1", networkSettings.getPort(), board -> {
+		return new Client(networkSettings.getServer(), networkSettings.getPort(), board -> {
 			Platform.runLater(() -> {
 				changeBoard(board);
 			});
 		});
 	}
 
+	/**
+	 * ChangeBoard changes the models board to the received board.
+	 * 
+	 * ChangeBoard is called whenever the connection receives a new board. Method
+	 * also checks for end game and plays an AI move if necessary. Method also
+	 * handles cases when player does not have any possible moves.
+	 * 
+	 * @param newBoard : the new ReversiBoard object created by opponents turn
+	 */
 	public void changeBoard(ReversiBoard newBoard) {
 		model.setBoard(newBoard.getBoard());
 		controller.updateScore();
-		canPlay = true;
 		model.endTurn();
+		if (controller.isGameOver())
+			gameOverfunction();
+		if (isServer) {
+			controller.updateValidMoves(ReversiModel.W);
+		} else
+			controller.updateValidMoves(ReversiModel.B);
+
+		// Forfeit turn if player has no possible moves to play
+		if (model.getValidMoves() == 0) {
+			System.out.print("no valid");
+			if (isServer) {
+				try {
+					canPlay = false;
+					clientConnection.send(board);
+				} catch (IOException e) {
+				}
+			} else {
+				try {
+					canPlay = false;
+					serverConnection.send(board);
+				} catch (IOException e) {
+				}
+			}
+		}
+		// Automatically play an AI move when sent a board (opponent plays a turn)
+		else if (!networkSettings.getHumanOrComputer()) {
+			canPlay = false;
+			if (isServer) {
+				try {
+					networkAIPlay(ReversiModel.W);
+					clientConnection.send(board);
+				} catch (ReversiIllegalLocationException | IOException e) {
+				}
+			} else {
+				try {
+					networkAIPlay(ReversiModel.B);
+					serverConnection.send(board);
+				} catch (ReversiIllegalLocationException | IOException e) {
+				}
+			}
+		} else
+			canPlay = true;
 	}
 
 	/**
@@ -209,7 +289,9 @@ public class ReversiView extends Application implements Observer {
 		// Plays the Game if StackPane is clicked on
 		pane.setOnMousePressed((MouseEvent event) -> {
 			try {
+
 				if (connectionEstablished && canPlay) {
+					// Network Play Between Server and Client
 					if (isServer) {
 						if (networkPlay(row, col, 1)) {
 							canPlay = false;
@@ -221,10 +303,8 @@ public class ReversiView extends Application implements Observer {
 							serverConnection.send(board);
 						}
 					}
-				} else if (canPlay){
-					play(row, col);
-					System.out.print("here2");
-				}
+				} else if (canPlay)
+					play(row, col); // Local Play
 
 			} catch (ReversiIllegalLocationException e) {
 				e.printStackTrace();
@@ -235,15 +315,17 @@ public class ReversiView extends Application implements Observer {
 	}
 
 	/**
-	 * play is where the game is actually played. Checks to see if the game is over
-	 * and then alternates between player and computer till there is a winner,
-	 * loser, or tie. If not valid moves are able to be made on one side, that turn
-	 * is skipped and automatically given to the opposing party.
+	 * netWorkPlay plays one human turn for the Server/Client.
 	 * 
-	 * @param row : is the current row location of the player click
-	 * @param col : is the current col location of the player click
+	 * Can play White or Black. Checks to see if the game is over. Updates the
+	 * ReversiBoard at the end of the turn.
+	 * 
+	 * @param row    : is the current row location of the player click
+	 * @param col    : is the current col location of the player click
+	 * @param player : color of the player
 	 * @throws ReversiIllegalLocationException : If an illegal Location is chosen
 	 *                                         and can't be placed
+	 * @return boolean whether a turn was able to be played
 	 */
 	private boolean networkPlay(int row, int col, int player) throws ReversiIllegalLocationException {
 		boolean exitFlag = false;
@@ -251,13 +333,10 @@ public class ReversiView extends Application implements Observer {
 		if (controller.isGameOver()) {
 			exitFlag = true;
 			gameOverfunction();
-		}
-		else {
-			System.out.print("Yes!" + player);
+		} else {
 			controller.updateScore();
 			controller.updateValidMoves(model.getCurrentPlayer());
 			if (model.getValidMoves() > 0) {
-				boolean legalMove = false;
 				int r = row;
 				int c = col;
 				// Check if move is legal
@@ -265,16 +344,48 @@ public class ReversiView extends Application implements Observer {
 					success = true;
 					controller.humanTurn(r, c, player);
 					controller.updateScore();
-					//controller.updateValidMoves(model.getCurrentPlayer());
-				}
-				else
+					model.endTurn();
+				} else
 					return false;
 			}
 
 		}
-		model.endTurn();
+		if (controller.isGameOver() && exitFlag == false) {
+			exitFlag = true;
+			gameOverfunction();
+		}
 		board = model.getBoardObj();
 		return success;
+	}
+
+	/**
+	 * netWorkAIPlay plays one AI turn for the Server/Client.
+	 * 
+	 * Can play White or Black. Checks to see if the game is over. Updates the
+	 * ReversiBoard at the end of the turn.
+	 * 
+	 * @param player : color of the player
+	 * @throws ReversiIllegalLocationException : If an illegal Location is chosen
+	 *                                         and can't be placed
+	 */
+	private void networkAIPlay(int player) throws ReversiIllegalLocationException {
+		boolean exitFlag = false;
+		if (controller.isGameOver()) {
+			exitFlag = true;
+			gameOverfunction();
+		} else {
+			controller.updateScore();
+			controller.updateValidMoves(model.getCurrentPlayer());
+			controller.computerTurn(player);
+			controller.updateScore();
+			controller.updateValidMoves(model.getCurrentPlayer());
+		}
+		model.endTurn();
+		if (controller.isGameOver() && exitFlag == false) {
+			exitFlag = true;
+			gameOverfunction();
+		}
+		board = model.getBoardObj();
 	}
 
 	/**
@@ -308,6 +419,7 @@ public class ReversiView extends Application implements Observer {
 						controller.humanTurn(r, c, 1);
 						controller.updateScore();
 						controller.updateValidMoves(model.getCurrentPlayer());
+						model.endTurn();
 						// Checks to see if there are still legal moves to be made by Player
 						if (model.getValidMoves() <= 0)
 							model.setCurrentPlayer(ReversiModel.W);
@@ -315,10 +427,12 @@ public class ReversiView extends Application implements Observer {
 							controller.computerTurn(2);
 							controller.updateScore();
 							controller.updateValidMoves(model.getCurrentPlayer());
+							model.endTurn();
 							while (model.getValidMoves() <= 0 && !controller.isGameOver()) {
 								controller.computerTurn(2);
 								controller.updateScore();
 								controller.updateValidMoves(model.getCurrentPlayer());
+								model.endTurn();
 							}
 							if (controller.isGameOver() && exitFlag == false) {
 								exitFlag = true;
@@ -333,10 +447,9 @@ public class ReversiView extends Application implements Observer {
 				}
 			}
 		}
-		model.endTurn();
 		board = model.getBoardObj();
 	}
-	
+
 	/**
 	 * update's purpose is to let the GUI know whenever there is a change in the
 	 * model by showing the changes on the JavaFX GUI. Everytime there is a change,
@@ -366,7 +479,7 @@ public class ReversiView extends Application implements Observer {
 		this.root.setBottom(score);
 
 	}
-	
+
 	/**
 	 * resetBoard resets the Board once invoked by creating a brand new model and
 	 * controller and then deleting the current SavaData.
@@ -401,11 +514,21 @@ public class ReversiView extends Application implements Observer {
 
 		// Blacks win
 		if (model.getBScore() > model.getWScore()) {
-			endScreen.setContentText("BLACKS. Computer Wins!");
+			String text = "BLACKS. ";
+			if (!isServer)
+				text += "You Win!";
+			else
+				text += "You Lose.";
+			endScreen.setContentText(text);
 			Optional<ButtonType> result = endScreen.showAndWait();
 			// Whites win
 		} else if (model.getWScore() > model.getBScore()) {
-			endScreen.setContentText("WHITES. You Win!");
+			String text = "WHITES. ";
+			if (isServer)
+				text += "You Win!";
+			else
+				text += "You Lose.";
+			endScreen.setContentText(text);
 			Optional<ButtonType> result = endScreen.showAndWait();
 			// Tie Game
 		} else if (model.getWScore() == model.getBScore()) {

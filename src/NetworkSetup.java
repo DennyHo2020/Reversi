@@ -84,7 +84,10 @@ public class NetworkSetup extends Stage {
 			} else {
 				this.isHuman = false; // Computer is Selected
 			}
-			this.server = serverTextField.getText();
+			if (serverTextField.getText().equals("localhost"))
+				this.server = "127.0.0.1";
+			else
+				this.server = serverTextField.getText();
 			this.port = portTextField.getText();
 
 			System.out.println(isServer + " " + isHuman + " " + server + " " + port);
