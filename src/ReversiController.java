@@ -27,13 +27,19 @@ public class ReversiController {
 	 * @param col : intended column for placement
 	 * @throws ReversiIllegalLocationException 
 	 */
-	public void humanTurn(int row, int col) throws ReversiIllegalLocationException {
+	public void humanTurn(int row, int col, int color) throws ReversiIllegalLocationException {
 		if (row < 0 || row > 7 || col < 0 || col > 7) {
 			throw new ReversiIllegalLocationException("Invalid Row or Column Entered");
 		}
-		getCount(row, col, ReversiModel.W, true);
-		model.placeW(row, col);
-		model.setCurrentPlayer(ReversiModel.B);
+		getCount(row, col, color, true);
+		if (color == 2) {
+			model.placeB(row, col);
+			model.setCurrentPlayer(ReversiModel.W);
+		}
+		else {
+			model.placeW(row, col);
+			model.setCurrentPlayer(ReversiModel.B);
+		}
 	}
 	/**
 	 * Computer turn finds a legal space that will result in the most captures and places

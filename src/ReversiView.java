@@ -210,11 +210,17 @@ public class ReversiView extends Application implements Observer {
 		pane.setOnMousePressed((MouseEvent event) -> {
 			try {
 				if (connectionEstablished && canPlay) {
-					play(row, col);
 					if (isServer) {
-						clientConnection.send(board);
-					} else
-						serverConnection.send(board);
+						if (networkPlay(row, col, 1)) {
+							canPlay = false;
+							clientConnection.send(board);
+						}
+					} else {
+						if (networkPlay(row, col, 2)) {
+							canPlay = false;
+							serverConnection.send(board);
+						}
+					}
 				} else if (canPlay){
 					play(row, col);
 					System.out.print("here2");
@@ -229,56 +235,6 @@ public class ReversiView extends Application implements Observer {
 	}
 
 	/**
-	 * update's purpose is to let the GUI know whenever there is a change in the
-	 * model by showing the changes on the JavaFX GUI. Everytime there is a change,
-	 * an attempt to save the changed state of the ReversiBoard will be made.
-	 * 
-	 * @param o: Is the Oberservable default parameter that allows us to communicate
-	 *        with the model
-	 * @param arg: Is a new instance of the ReversiBoard Class that we create every
-	 *        time a change is made.
-	 */
-	@Override
-	public void update(Observable o, Object arg) {
-		try {
-			((ReversiBoard) arg).save(); // Saves the File
-		} catch (Exception e) {
-			System.out.println("Couldn't Save: " + e.getMessage());
-		}
-		tile.getChildren().clear();
-		int[][] grid = controller.getGrid();
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {
-				tile.getChildren().add(createPane(grid[i][j], i, j));
-			}
-		}
-		// Updates Score
-		this.score = new Label("White: " + model.getWScore() + " " + "Black: " + model.getBScore());
-		this.root.setBottom(score);
-
-	}
-
-	/**
-	 * resetBoard resets the Board once invoked by creating a brand new model and
-	 * controller and then deleting the current SavaData.
-	 */
-	void resetBoard() {
-		this.model = new ReversiModel();
-		this.controller = new ReversiController(this.model);
-		model.addObserver(this);
-		tile.getChildren().clear();
-		int[][] grid = controller.getGrid();
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {
-				tile.getChildren().add(createPane(grid[i][j], i, j));
-			}
-		}
-		this.score = new Label("White: " + model.getWScore() + " " + "Black: " + model.getBScore());
-		this.root.setBottom(score);
-		deleteSaveData();
-	}
-
-	/**
 	 * play is where the game is actually played. Checks to see if the game is over
 	 * and then alternates between player and computer till there is a winner,
 	 * loser, or tie. If not valid moves are able to be made on one side, that turn
@@ -289,20 +245,36 @@ public class ReversiView extends Application implements Observer {
 	 * @throws ReversiIllegalLocationException : If an illegal Location is chosen
 	 *                                         and can't be placed
 	 */
-	private void networkPlay(int row, int col, int player) throws ReversiIllegalLocationException {
+	private boolean networkPlay(int row, int col, int player) throws ReversiIllegalLocationException {
 		boolean exitFlag = false;
+		boolean success = false;
 		if (controller.isGameOver()) {
 			exitFlag = true;
 			gameOverfunction();
 		}
-
 		else {
+			System.out.print("Yes!" + player);
 			controller.updateScore();
 			controller.updateValidMoves(model.getCurrentPlayer());
+			if (model.getValidMoves() > 0) {
+				boolean legalMove = false;
+				int r = row;
+				int c = col;
+				// Check if move is legal
+				if (controller.isValidMove(row, col, player)) {
+					success = true;
+					controller.humanTurn(r, c, player);
+					controller.updateScore();
+					//controller.updateValidMoves(model.getCurrentPlayer());
+				}
+				else
+					return false;
+			}
 
 		}
 		model.endTurn();
 		board = model.getBoardObj();
+		return success;
 	}
 
 	/**
@@ -333,7 +305,7 @@ public class ReversiView extends Application implements Observer {
 					int c = col;
 					// Check if move is legal
 					if (controller.isValidMove(row, col, ReversiModel.W)) {
-						controller.humanTurn(r, c);
+						controller.humanTurn(r, c, 1);
 						controller.updateScore();
 						controller.updateValidMoves(model.getCurrentPlayer());
 						// Checks to see if there are still legal moves to be made by Player
@@ -363,6 +335,56 @@ public class ReversiView extends Application implements Observer {
 		}
 		model.endTurn();
 		board = model.getBoardObj();
+	}
+	
+	/**
+	 * update's purpose is to let the GUI know whenever there is a change in the
+	 * model by showing the changes on the JavaFX GUI. Everytime there is a change,
+	 * an attempt to save the changed state of the ReversiBoard will be made.
+	 * 
+	 * @param o: Is the Oberservable default parameter that allows us to communicate
+	 *        with the model
+	 * @param arg: Is a new instance of the ReversiBoard Class that we create every
+	 *        time a change is made.
+	 */
+	@Override
+	public void update(Observable o, Object arg) {
+		try {
+			((ReversiBoard) arg).save(); // Saves the File
+		} catch (Exception e) {
+			System.out.println("Couldn't Save: " + e.getMessage());
+		}
+		tile.getChildren().clear();
+		int[][] grid = controller.getGrid();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				tile.getChildren().add(createPane(grid[i][j], i, j));
+			}
+		}
+		// Updates Score
+		this.score = new Label("White: " + model.getWScore() + " " + "Black: " + model.getBScore());
+		this.root.setBottom(score);
+
+	}
+	
+	/**
+	 * resetBoard resets the Board once invoked by creating a brand new model and
+	 * controller and then deleting the current SavaData.
+	 */
+	void resetBoard() {
+		this.model = new ReversiModel();
+		this.controller = new ReversiController(this.model);
+		model.addObserver(this);
+		tile.getChildren().clear();
+		int[][] grid = controller.getGrid();
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				tile.getChildren().add(createPane(grid[i][j], i, j));
+			}
+		}
+		this.score = new Label("White: " + model.getWScore() + " " + "Black: " + model.getBScore());
+		this.root.setBottom(score);
+		deleteSaveData();
 	}
 
 	/**
