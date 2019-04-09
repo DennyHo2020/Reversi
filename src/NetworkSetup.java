@@ -138,7 +138,11 @@ public class NetworkSetup extends Stage {
 	 * @return: String Representation of Port
 	 */
 	public int getPort() {
-		return Integer.parseInt(port);
+		if (port != null) {
+			return Integer.parseInt(port);
+		} else {
+			return -900;
+		}
 	}
 
 	/**

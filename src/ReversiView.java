@@ -228,22 +228,22 @@ public class ReversiView extends Application implements Observer {
 			gameOverfunction();
 			return;}
 		
-		// Forfeit turn if player has no possible moves to play
-		if (model.getValidMoves() == 0) {
-			if (isServer) {
-				try {
-					canPlay = false;
-					clientConnection.send(board);
-				} catch (IOException e) {
-				}
-			} else {
-				try {
-					canPlay = false;
-					serverConnection.send(board);
-				} catch (IOException e) {
-				}
-			}
-		}
+//		// Forfeit turn if player has no possible moves to play
+//		if (model.getValidMoves() == 0) {
+//			if (isServer) {
+//				try {
+//					canPlay = false;
+//					clientConnection.send(board);
+//				} catch (IOException e) {
+//				}
+//			} else {
+//				try {
+//					canPlay = false;
+//					serverConnection.send(board);
+//				} catch (IOException e) {
+//				}
+//			}
+//		}
 	
 		// Automatically play an AI move when sent a board (opponent plays a turn)
 		else if (!networkSettings.getHumanOrComputer()) {
@@ -343,6 +343,10 @@ public class ReversiView extends Application implements Observer {
 		} else {
 			controller.updateScore();
 			controller.updateValidMoves(model.getCurrentPlayer());
+			if (model.getValidMoves() == 0) { // When there is no Legal Moves 
+				controller.computerTurn(player);
+				return false;
+			}
 			if (model.getValidMoves() > 0) {
 				int r = row;
 				int c = col;
