@@ -13,6 +13,20 @@ import javafx.scene.control.ToggleGroup;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+/**
+ * 
+ * @author Ryan Luu and Denny Ho
+ * 
+ * NetWorkSetup pops open a UI box that asks the user for what information they need 
+ * in order to establish a Server-Client Connection game of Reversi. 
+ * 
+ * The Four things we need are: 
+ * 1. Do they want to be a server or client 
+ * 2. Are they a Human or Computer Player 
+ * 3. What is the Server name 
+ * 4. What is the Port Number 
+ *
+ */
 public class NetworkSetup extends Stage {
 
 	private boolean isServer;
@@ -24,6 +38,10 @@ public class NetworkSetup extends Stage {
 		makeSetupBox();
 	}
 
+	/**
+	 * makeSetupBox is the JavaFX box that accepts information about the user to fill 
+	 * out the above marked fields needed to play a network-game of Reversi. 
+	 */
 	private void makeSetupBox() {
 		Stage window = new Stage();
 		window.initModality(Modality.APPLICATION_MODAL);
@@ -89,8 +107,6 @@ public class NetworkSetup extends Stage {
 			else
 				this.server = serverTextField.getText();
 			this.port = portTextField.getText();
-
-			System.out.println(isServer + " " + isHuman + " " + server + " " + port);
 			window.close();
 
 		});

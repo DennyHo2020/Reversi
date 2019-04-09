@@ -7,6 +7,11 @@ import java.util.function.Consumer;
 
 import javafx.application.Platform;
 
+/**
+ * 
+ * @author Ryan Luu and Denny Ho 
+ *
+ */
 public class Server {
 	private int port;
 	private Consumer<ReversiBoard> board;

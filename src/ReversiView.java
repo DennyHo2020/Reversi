@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Observable;
 import java.util.Observer;
@@ -133,6 +134,7 @@ public class ReversiView extends Application implements Observer {
 
 		});
 
+		// Code that Populates the Initial Reversi Screen.
 		FileBar.getItems().add(menuItem);
 		FileBar.getItems().add(networkOption);
 		menuBar.getMenus().addAll(FileBar);
@@ -215,16 +217,19 @@ public class ReversiView extends Application implements Observer {
 		model.setBoard(newBoard.getBoard());
 		controller.updateScore();
 		model.endTurn();
-		if (controller.isGameOver())
-			gameOverfunction();
+
 		if (isServer) {
 			controller.updateValidMoves(ReversiModel.W);
-		} else
+	//		System.out.println(model.getValidMoves() + " ELME ");
+		} else {
 			controller.updateValidMoves(ReversiModel.B);
-
+		}
+		if (controller.isGameOver()) {
+			gameOverfunction();
+			return;}
+		
 		// Forfeit turn if player has no possible moves to play
 		if (model.getValidMoves() == 0) {
-			System.out.print("no valid");
 			if (isServer) {
 				try {
 					canPlay = false;
@@ -239,9 +244,11 @@ public class ReversiView extends Application implements Observer {
 				}
 			}
 		}
+	
 		// Automatically play an AI move when sent a board (opponent plays a turn)
 		else if (!networkSettings.getHumanOrComputer()) {
 			canPlay = false;
+			
 			if (isServer) {
 				try {
 					networkAIPlay(ReversiModel.W);
@@ -366,7 +373,7 @@ public class ReversiView extends Application implements Observer {
 	 * 
 	 * @param player : color of the player
 	 * @throws ReversiIllegalLocationException : If an illegal Location is chosen
-	 *                                         and can't be placed
+	 *                                      and can't be placed
 	 */
 	private void networkAIPlay(int player) throws ReversiIllegalLocationException {
 		boolean exitFlag = false;

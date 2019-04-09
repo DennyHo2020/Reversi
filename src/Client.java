@@ -7,6 +7,12 @@ import java.util.function.Consumer;
 
 import javafx.application.Platform;
 
+/**
+ * 
+ * @author Ryan Luu and Denny Ho
+ * 
+ *
+ */
 public class Client {
 	private int port;
 	private String ip;
