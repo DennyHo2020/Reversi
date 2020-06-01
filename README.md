@@ -8,3 +8,4 @@ Skills displayed in this project:
 3. Implementing Game Algorithms
 4. GUI Design 
 5. Event Driven Programming
+6. AI Implementation
