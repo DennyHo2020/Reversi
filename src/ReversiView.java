@@ -90,7 +90,7 @@ public class ReversiView extends Application implements Observer {
 		Menu FileBar = new Menu("File");
 		primaryStage.setTitle("Reversi");
 		this.root = new BorderPane();
-		this.score = new Label("White: " + model.getWScore() + " " + "Black: " + model.getBScore());
+		this.score = new Label("White: " + model.getBScore() + " " + "Black: " + model.getWScore());
 		MenuBar menuBar = new MenuBar();
 		MenuItem menuItem = new MenuItem("New Game");
 		MenuItem networkOption = new MenuItem("Networked Game");
@@ -475,7 +475,7 @@ public class ReversiView extends Application implements Observer {
 			}
 		}
 		// Updates Score
-		this.score = new Label("White: " + model.getWScore() + " " + "Black: " + model.getBScore());
+		this.score = new Label("White: " + model.getBScore() + " " + "Black: " + model.getWScore());
 		this.root.setBottom(score);
 
 	}
@@ -508,12 +508,12 @@ public class ReversiView extends Application implements Observer {
 		Alert endScreen = new Alert(AlertType.CONFIRMATION);
 		endScreen.setTitle("GameOver");
 		endScreen.setHeaderText(
-				"And the Winner is with a score of White: " + model.getWScore() + " Black: " + model.getBScore());
+				"And the Winner is with a score of White: " + model.getBScore() + " Black: " + model.getWScore());
 		ButtonType buttonTypeCancel = new ButtonType("Alright", ButtonData.CANCEL_CLOSE);
 		endScreen.getButtonTypes().setAll(buttonTypeCancel);
 
 		// Blacks win
-		if (model.getBScore() > model.getWScore()) {
+		if (model.getBScore() < model.getWScore()) {
 			String text = "BLACKS. ";
 			if (!isServer)
 				text += "You Win!";
@@ -522,7 +522,7 @@ public class ReversiView extends Application implements Observer {
 			endScreen.setContentText(text);
 			Optional<ButtonType> result = endScreen.showAndWait();
 			// Whites win
-		} else if (model.getWScore() > model.getBScore()) {
+		} else if (model.getWScore() < model.getBScore()) {
 			String text = "WHITES. ";
 			if (isServer)
 				text += "You Win!";
