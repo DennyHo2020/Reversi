@@ -18,3 +18,6 @@ Skills displayed in this project:
 4. GUI Design 
 5. Event Driven Programming
 6. AI Implementation
+
+
+Note: Scores are flipped in GIFs but have been fixed in the source code. 
